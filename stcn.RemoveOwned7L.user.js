@@ -73,7 +73,7 @@
                 console.log(event);
                 own = JSON.parse(event.data.own);
                 wish = JSON.parse(event.data.wish);
-                //下面这段用于7L
+                //脧脗脙忙脮芒露脦脫脙脫脷7L
                 jQuery('.steam_info_trigger_text').each(function(){
                     var trigger = jQuery(this);
                     var href = String(trigger.data('href'));
