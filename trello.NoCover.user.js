@@ -4,6 +4,8 @@
 // @version      0.1
 // @description  try to take over the world!
 // @author       wongchance
+// @updateURL    https://github.com/wongchance/JsCollection/raw/master/trello.NoCover.user.js
+// @downloadURL  https://github.com/wongchance/JsCollection/raw/master/trello.NoCover.user.js
 // @match        https://trello.com/b/LvwOjrYP/ingress-medal-arts
 // @require      https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js
 // @grant        none
