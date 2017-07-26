@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         trllo no cover
+// @name         trello no cover
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.1.1
 // @description  try to take over the world!
 // @author       wongchance
 // @updateURL    https://github.com/wongchance/JsCollection/raw/master/trello.NoCover.user.js
@@ -15,11 +15,14 @@
     jQuery(document).ready(function() {
         setInterval(function() {
             RemoveCover();
-        }, 100);
-
+        }, 50);
     });
 
     function RemoveCover() {
-        $('div.list-card-cover.js-card-cover').css('background-image', '').css('height', '0px');
+        $('div.list-card-cover.js-card-cover').remove();
+        $('div.header-banner.mod-warning').remove();
+        $('div.member').remove();
+        //$('div.board-menu-container').html('');
+        //$('a.board-menu-header-close-button.icon-lg icon-close.js-hide-sidebar').click();
     }
 })();
