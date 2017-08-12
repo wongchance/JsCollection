@@ -4,15 +4,17 @@
 // @version      0.1
 // @description  try to take over the world!
 // @author       wongchance
+// @updateURL    https://github.com/wongchance/JsCollection/raw/master/stcn.RemoveOwned7L.user.js
+// @downloadURL  https://github.com/wongchance/JsCollection/raw/master/stcn.RemoveOwned7L.user.js
 // @match        http://steamcn.com/plugin.php?id=steamcn_gift:search*
 // @match        https://steamcn.com/plugin.php?id=steamcn_gift:search*
 // @require      https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js
 // @grant        none
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
-    jQuery(document).ready(function() {
+    jQuery(document).ready(function () {
 
         var urlTmp = window.location.href;
 
@@ -35,7 +37,7 @@
         for (var i = pageIndex; i < count; i++) {
 
             urlTmp = replaceParamVal(urlTmp, 'page', (i + 1));
-            $.get(urlTmp, function(data) {
+            $.get(urlTmp, function (data) {
                 var htmlTmp = data;
                 if (htmlTmp.indexOf("d_gw_search_noresult") > -1) { console.log(urlTmp); } else {
                     var indexBegin = htmlTmp.indexOf("<a href=\"./forum.php?mod=viewthread&amp;tid=");
@@ -69,7 +71,7 @@
                 own = JSON.parse(event.data.own);
                 wish = JSON.parse(event.data.wish);
                 //ÏÂÃæÕâ¶ÎÓÃÓÚ7L
-                jQuery('.steam_info_trigger_text').each(function() {
+                jQuery('.steam_info_trigger_text').each(function () {
                     var trigger = jQuery(this);
                     var href = String(trigger.data('href'));
                     var match;
@@ -84,7 +86,7 @@
                 });
             } else if (event.data.desura) {
                 desura = JSON.parse(event.data.desura);
-                jQuery('a[href^="http://www.desura.com/games/"]').each(function() {
+                jQuery('a[href^="http://www.desura.com/games/"]').each(function () {
                     var trigger = jQuery(this);
                     trigger.addClass('linkDesura');
                     var href = String(trigger.attr('href'));

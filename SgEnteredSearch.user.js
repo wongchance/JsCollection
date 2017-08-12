@@ -4,6 +4,8 @@
 // @version      0.2
 // @description  try to take over the world!
 // @author       wongchance
+// @updateURL    https://github.com/wongchance/JsCollection/raw/master/SgEnteredSearch.user.js
+// @downloadURL  https://github.com/wongchance/JsCollection/raw/master/SgEnteredSearch.user.js
 // @match        *://www.indiegala.com/gift?gift_id=*
 // @match      	 *steamcn.com/*
 // @require      https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js
