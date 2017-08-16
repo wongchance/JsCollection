@@ -49,7 +49,6 @@
             divButton.style.right = '50px';
             divButton.style.width = '55px';
             divButton.style.height = '55px';
-
             divButton.style.background = 'url("/template/steamcn_metro/src/img/common/nav-search.png") center center no-repeat rgb(87, 186, 232)';
             divButton.style.cursor = "pointer";
         }

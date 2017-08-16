@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Remove owned 7L
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.1.1
 // @description  try to take over the world!
 // @author       wongchance
 // @updateURL    https://github.com/wongchance/JsCollection/raw/master/stcn.RemoveOwned7L.user.js
@@ -12,32 +12,26 @@
 // @grant        none
 // ==/UserScript==
 
-(function () {
+(function() {
     'use strict';
-    jQuery(document).ready(function () {
-
+    jQuery(document).ready(function() {
         var urlTmp = window.location.href;
-
         //$.get("http://steamcn.com/plugin.php?id=steamcn_gift:search&type=7l&q=ending&page=4", function(data){
         //   alert("Data Loaded: " + data);
         //});
-
         var pageIndex = 0;
         pageIndex = parseInt(hasParameter("page"));
         if (!pageIndex) {
             urlTmp += '&page=1';
             pageIndex = 1;
         }
-
         var count = parseInt(pageIndex) + 10;
-
-
         jQuery("div.pg").attr('id', 'divpg');
 
         for (var i = pageIndex; i < count; i++) {
 
             urlTmp = replaceParamVal(urlTmp, 'page', (i + 1));
-            $.get(urlTmp, function (data) {
+            $.get(urlTmp, function(data) {
                 var htmlTmp = data;
                 if (htmlTmp.indexOf("d_gw_search_noresult") > -1) { console.log(urlTmp); } else {
                     var indexBegin = htmlTmp.indexOf("<a href=\"./forum.php?mod=viewthread&amp;tid=");
@@ -53,9 +47,7 @@
                     //alert("Load was performed.");
                     //jQuery("p.steam_info_trigger_text.steam_info_own").closest('a').css('display','none');
                     //});
-
                 }
-
                 //console.log(urlTmp);
             });
 
@@ -70,8 +62,7 @@
                 console.log(event);
                 own = JSON.parse(event.data.own);
                 wish = JSON.parse(event.data.wish);
-                //ÏÂÃæÕâ¶ÎÓÃÓÚ7L
-                jQuery('.steam_info_trigger_text').each(function () {
+                jQuery('.steam_info_trigger_text').each(function() {
                     var trigger = jQuery(this);
                     var href = String(trigger.data('href'));
                     var match;
@@ -86,7 +77,7 @@
                 });
             } else if (event.data.desura) {
                 desura = JSON.parse(event.data.desura);
-                jQuery('a[href^="http://www.desura.com/games/"]').each(function () {
+                jQuery('a[href^="http://www.desura.com/games/"]').each(function() {
                     var trigger = jQuery(this);
                     trigger.addClass('linkDesura');
                     var href = String(trigger.attr('href'));
@@ -108,20 +99,11 @@
             }
         }
         window.addEventListener("message", receiveMessage, false);
-
-
         jQuery("p.steam_info_trigger_text.steam_info_own").closest('a').css('display', 'none');
-
-
-
-
 
     });
 
 })();
-
-
-
 
 function hasParameter(name) {
     var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
@@ -129,7 +111,6 @@ function hasParameter(name) {
     if (r) return unescape(r[2]);
     return null;
 }
-
 
 function replaceParamVal(oldUrl, paramName, replaceWith) {
     var re = eval('/(' + paramName + '=)([^&]*)/gi');
