@@ -12,9 +12,9 @@
 // @grant        none
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
-    jQuery(document).ready(function() {
+    jQuery(document).ready(function () {
         var urlTmp = window.location.href;
         //$.get("http://steamcn.com/plugin.php?id=steamcn_gift:search&type=7l&q=ending&page=4", function(data){
         //   alert("Data Loaded: " + data);
@@ -31,7 +31,7 @@
         for (var i = pageIndex; i < count; i++) {
 
             urlTmp = replaceParamVal(urlTmp, 'page', (i + 1));
-            $.get(urlTmp, function(data) {
+            $.get(urlTmp, function (data) {
                 var htmlTmp = data;
                 if (htmlTmp.indexOf("d_gw_search_noresult") > -1) { console.log(urlTmp); } else {
                     var indexBegin = htmlTmp.indexOf("<a href=\"./forum.php?mod=viewthread&amp;tid=");
@@ -62,7 +62,7 @@
                 console.log(event);
                 own = JSON.parse(event.data.own);
                 wish = JSON.parse(event.data.wish);
-                jQuery('.steam_info_trigger_text').each(function() {
+                jQuery('.steam_info_trigger_text').each(function () {
                     var trigger = jQuery(this);
                     var href = String(trigger.data('href'));
                     var match;
@@ -77,7 +77,7 @@
                 });
             } else if (event.data.desura) {
                 desura = JSON.parse(event.data.desura);
-                jQuery('a[href^="http://www.desura.com/games/"]').each(function() {
+                jQuery('a[href^="http://www.desura.com/games/"]').each(function () {
                     var trigger = jQuery(this);
                     trigger.addClass('linkDesura');
                     var href = String(trigger.attr('href'));

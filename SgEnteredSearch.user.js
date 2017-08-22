@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Sg Entered Search
 // @namespace    http://tampermonkey.net/
-// @version      0.2.1
+// @version      0.2.2
 // @description  try to take over the world!
 // @author       wongchance
 // @updateURL    https://github.com/wongchance/JsCollection/raw/master/SgEnteredSearch.user.js
@@ -12,9 +12,9 @@
 // @grant        none
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
-    jQuery(document).ready(function() {
+    jQuery(document).ready(function () {
         var aCount = 0;
         var aList = [];
         var sourceStr = "ig";
@@ -32,7 +32,7 @@
             eleA.setAttribute('onclick', 'return false;');
             eleA.textContent = 'Search Sg';
             divButton.appendChild(eleA);
-            $('div.giftprof_key').find('a.game-steam-url').each(function(index, n) {
+            $('div.giftprof_key').find('a.game-steam-url').each(function (index, n) {
                 aList.push($(n).innerHTML);
             });
             aCount = $('div.giftprof_key').find('a.game-steam-url').length;
@@ -41,7 +41,7 @@
             divButton.style.right = '20px';
         } else if (sourceStr == "stcn") {
             aCount = $('body').find('a.steamInfoLink').not(".linkOwn").length;
-            $('body').find('a.steamInfoLink').not(".linkOwn").each(function(index, n) {
+            $('body').find('a.steamInfoLink').not(".linkOwn").each(function (index, n) {
                 aList.push($(n).text().replace(/_/g, "%20"));
             });
             divButton.classList.add('backToTop');
@@ -53,17 +53,17 @@
             divButton.style.cursor = "pointer";
         }
         document.body.appendChild(divButton);
-        divButton.addEventListener('click', function() {
+        divButton.addEventListener('click', function () {
             aCount = 0;
             aList = [];
             if (sourceStr == "ig") {
-                $('div.giftprof_key').find('a.game-steam-url').each(function(index, n) {
-                    aList.push($(n).innerHTML);
+                $('div.giftprof_key').find('a.game-steam-url').each(function (index, n) {
+                    aList.push($(n).html());
                 });
                 aCount = $('div.giftprof_key').find('a.game-steam-url').length;
             } else if (sourceStr == "stcn") {
                 aCount = $('body').find('a.steamInfoLink').not(".linkOwn").length;
-                $('body').find('a.steamInfoLink').not(".linkOwn").each(function(index, n) {
+                $('body').find('a.steamInfoLink').not(".linkOwn").each(function (index, n) {
                     aList.push($(n).text().replace(/_/g, "%20"));
                 });
             }
