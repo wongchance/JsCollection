@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Sg Entered Search
 // @namespace    http://tampermonkey.net/
-// @version      0.2.2
+// @version      0.2.3
 // @description  try to take over the world!
 // @author       wongchance
 // @updateURL    https://github.com/wongchance/JsCollection/raw/master/SgEnteredSearch.user.js
@@ -42,7 +42,14 @@
         } else if (sourceStr == "stcn") {
             aCount = $('body').find('a.steamInfoLink').not(".linkOwn").length;
             $('body').find('a.steamInfoLink').not(".linkOwn").each(function (index, n) {
-                aList.push($(n).text().replace(/_/g, "%20"));
+                var tempName = $(n).text().replace(/_/g, "%20");
+                //var str1 = "1dsdasfs2（23321）"
+                var s1 = tempName.indexOf('（');
+                var s2 = tempName.indexOf('）');
+                if (s1 > -1 && s2 > -1 && s2 > s1) {
+                    tempName = tempName.substring(s1, s2 - s1);
+                }
+                aList.push(tempName);
             });
             divButton.classList.add('backToTop');
             divButton.style.bottom = '100px';
@@ -64,7 +71,14 @@
             } else if (sourceStr == "stcn") {
                 aCount = $('body').find('a.steamInfoLink').not(".linkOwn").length;
                 $('body').find('a.steamInfoLink').not(".linkOwn").each(function (index, n) {
-                    aList.push($(n).text().replace(/_/g, "%20"));
+                    var tempName = $(n).text().replace(/_/g, "%20");
+                    //var str1 = "1dsdasfs2（23321）"
+                    var s1 = tempName.indexOf('（');
+                    var s2 = tempName.indexOf('）');
+                    if (s1 > -1 && s2 > -1 && s2 > s1) {
+                        tempName = tempName.substring(s1, s2 - s1);
+                    }
+                    aList.push(tempName);
                 });
             }
             for (var i = 0; i < aCount; i++) {
