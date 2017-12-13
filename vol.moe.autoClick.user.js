@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         autoclick
 // @namespace    http://tampermonkey.net/
-// @version      0.0.2
+// @version      0.0.3
 // @description  try to take over the world!
 // @author       wongchance
 // @match        http://vol.moe/comic/*
@@ -58,6 +58,25 @@
         jQuery('#push_button').after(selectallHtml);
         selectallHtml.addEventListener('click', do_selectall);
 
+        var commentGoTd = document.createElement('td');
+
+        var commentIndexHtml = document.createElement('input');
+        commentIndexHtml.id = "commentPageIndex";
+        commentIndexHtml.style.cssText = 'margin-left: 15px';
+        commentGoTd.appendChild(commentIndexHtml);
+
+
+        var commentGoHtml = document.createElement('a');
+        commentGoHtml.innerHTML = "Go";
+        commentGoHtml.id = 'commentGo';
+        commentGoHtml.style.cssText = 'margin-left: 5px';
+        commentGoHtml.setAttribute('href', 'javascript:void(0);');
+        commentGoHtml.setAttribute('onclick', 'commlist_page(document.getElementById("commentPageIndex").value);');
+        commentGoTd.appendChild(commentGoHtml);
+
+        jQuery('#book_comm_title').after(commentGoTd);
+        //selectallHtml.addEventListener('click', do_selectall);
+        jQuery('#book_comm_title').width("50%");
         // jQuery('#push_button').after(selectreverseHtml);
         // jQuery('#push_button').after(selectnoneHtml);
         // jQuery('#push_button').after(selectallHtml);
