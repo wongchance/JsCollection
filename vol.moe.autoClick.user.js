@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         autoclick
 // @namespace    http://tampermonkey.net/
-// @version      0.0.1
+// @version      0.0.2
 // @description  try to take over the world!
 // @author       wongchance
 // @match        http://vol.moe/comic/*
@@ -29,7 +29,7 @@
         selectreverseHtml.classList.add('weui_btn');
         selectreverseHtml.classList.add('weui_btn_mini');
         selectreverseHtml.classList.add('weui_btn_primary');
-        selectreverseHtml.style.cssText = 'margin:0 3px';
+        selectreverseHtml.style.cssText = 'margin-left: 5px';
         selectreverseHtml.setAttribute('href', 'javascript:void(0);');
         jQuery('#push_button').after(selectreverseHtml);
         selectreverseHtml.addEventListener('click', do_selectreverse);
@@ -41,7 +41,7 @@
         selectnoneHtml.classList.add('weui_btn');
         selectnoneHtml.classList.add('weui_btn_mini');
         selectnoneHtml.classList.add('weui_btn_primary');
-        selectnoneHtml.style.cssText = 'margin:0 3px';
+        selectnoneHtml.style.cssText = 'margin-left: 5px';
         selectnoneHtml.setAttribute('href', 'javascript:void(0);');
         jQuery('#push_button').after(selectnoneHtml);
         selectnoneHtml.addEventListener('click', do_selectnone);
@@ -53,7 +53,7 @@
         selectallHtml.classList.add('weui_btn');
         selectallHtml.classList.add('weui_btn_mini');
         selectallHtml.classList.add('weui_btn_primary');
-        selectallHtml.style.cssText = 'margin:0 3px';
+        selectallHtml.style.cssText = 'margin-left: 5px';
         selectallHtml.setAttribute('href', 'javascript:void(0);');
         jQuery('#push_button').after(selectallHtml);
         selectallHtml.addEventListener('click', do_selectall);
