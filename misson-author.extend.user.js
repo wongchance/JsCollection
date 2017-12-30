@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Mission Author
+// @name         Mission Author Extension
 // @namespace    http://tampermonkey.net/
-// @version      0.0.2
+// @version      0.0.3
 // @description  try to take over the world!
 // @author       wongchance
 // @match        https://mission-author-dot-betaspike.appspot.com/*
@@ -25,7 +25,6 @@
             '<li><a id="alllist" target="_self"><span class="glyphicon"></span> all</a></li>' +
             '<li><a id="newDraftlist" target="_self"><span class="glyphicon"></span> new Draft</a></li>' +
             '<li><a id="editDraftlist" target="_self"><span class="glyphicon"></span> edit Draft</a></li>' +
-
             '<li><a id="newReviewlist" target="_self"><span class="glyphicon"></span> in New Review</a></li>' +
             '<li><a id="editReviewlist" target="_self"><span class="glyphicon"></span> in Edit Review</a></li>' +
             '<li><a id="publishedlist" target="_self"><span class="glyphicon"></span> published</a></li>' +
