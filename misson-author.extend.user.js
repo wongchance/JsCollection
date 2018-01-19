@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Mission Author Extension
 // @namespace    http://tampermonkey.net/
-// @version      0.0.4
+// @version      0.1.0
 // @description  try to take over the world!
 // @author       wongchance
 // @match        https://mission-author-dot-betaspike.appspot.com/*
@@ -11,19 +11,19 @@
 // @grant        none
 // ==/UserScript==
 
-(function () {
+(function() {
     'use strict';
-    jQuery(document).ready(function () {
+    jQuery(document).ready(function() {
 
         // var url = window.location.href;
         // if (url.indexOf('edit') > -1) {
 
-        var t0 = setInterval(function () {
-            if (jQuery('input[ng-model="mission.definition.name"]').length > 0 && jQuery('#saveStoragebtn').length < 1) {
-                var storageButton = '<div class="form-group"><label class="button" id="saveStoragebtn">save</label> <label class="button" id="loadStoragebtn">load</label></div>';
-                jQuery('input[ng-model="mission.definition.name"]').parent().parent().append(storageButton);
-                jQuery('#saveStoragebtn')[0].addEventListener('click', saveStorage);
-                jQuery('#loadStoragebtn')[0].addEventListener('click', loadStorage);
+        var t0 = setInterval(function() {
+            if (jQuery('input[ng-model="mission.definition.name"]').length > 0 && jQuery('#savedspStoragebtn').length < 1) {
+                var storageDspButton = '<div class="form-group"><button class="button" id="savedspStoragebtn">save</button> <button class="button" id="loaddspStoragebtn">load</button></div>';
+                jQuery('input[ng-model="mission.definition.name"]').parent().parent().append(storageDspButton);
+                jQuery('#savedspStoragebtn')[0].addEventListener('click', savedspStorage);
+                jQuery('#loaddspStoragebtn')[0].addEventListener('click', loaddspStorage);
                 //clearInterval(t0);
             }
 
@@ -78,18 +78,59 @@
                 //clearInterval(t1);
             }
 
+            if ($('span.input-group-btn').length > 0 && jQuery('#saveLocBtn').length < 1) {
+                var storagelocButton = '<button class="smaller flat transparent" id="saveLocBtn">save</button><button class="smaller flat transparent" id="loadLocBtn">load</button>';
+                jQuery('span.input-group-btn').eq(0).append(storagelocButton);
+                jQuery('#saveLocBtn')[0].addEventListener('click', savelocStorage);
+                jQuery('#loadLocBtn')[0].addEventListener('click', loadlocStorage);
+            } else if ($('span.input-group-btn').length > 0 && jQuery('#saveLocBtn').length > 0) {
+                // if (confirm("location found,to do load?")) {
+                //     jQuery('#loadLocBtn')[0].click();
+                // }
+            }
+
         }, 1000);
 
-        // }
-        // else {
-        //     var t1 = setInterval(function () {
-
-        //     }, 1000);
-        // }
     });
 
 
-    function loadStorage(event) {
+    function loadlocStorage(event) {
+        var storage = window.localStorage;
+        if (!storage["loc"]) {
+            // if (!storage["name"] && !storage["description"]) {
+            //     if (confirm("name and description are both empty,still load?")) {
+            //         jQuery('input[ng-model="mission.definition.name"]').val(storage["name"]);
+            //         jQuery('textarea[ng-model="mission.definition.description"]').val(storage["description"]);
+
+            //     }
+            // } else if (!storage["name"]) {
+            //     if (confirm("name is empty,still load?")) {
+            //         jQuery('input[ng-model="mission.definition.name"]').val(storage["name"]);
+            //         jQuery('textarea[ng-model="mission.definition.description"]').val(storage["description"]);
+
+            //     }
+            // } else if (!storage["description"]) {
+            //     if (confirm("description is empty,still load?")) {
+            //         jQuery('input[ng-model="mission.definition.name"]').val(storage["name"]);
+            //         jQuery('textarea[ng-model="mission.definition.description"]').val(storage["description"]);
+            //     }
+            // }
+            alert("location not found");
+        } else {
+            jQuery('#autocomplete').val(storage["loc"]);
+            $('span.glyphicon.glyphicon-search')[0].click();
+        }
+
+
+    }
+
+    function savelocStorage(event) {
+        var storage = window.localStorage;
+        storage["loc"] = jQuery('#autocomplete').val();
+        //storage["description"] = jQuery('textarea[ng-model="mission.definition.description"]').val();
+    }
+
+    function loaddspStorage(event) {
         var storage = window.localStorage;
         if (!storage["name"] || !storage["description"]) {
             if (!storage["name"] && !storage["description"]) {
@@ -110,8 +151,7 @@
                     jQuery('textarea[ng-model="mission.definition.description"]').val(storage["description"]);
                 }
             }
-        }
-        else {
+        } else {
             jQuery('input[ng-model="mission.definition.name"]').val(storage["name"]);
             jQuery('textarea[ng-model="mission.definition.description"]').val(storage["description"]);
         }
@@ -119,7 +159,7 @@
 
     }
 
-    function saveStorage(event) {
+    function savedspStorage(event) {
         var storage = window.localStorage;
         storage["name"] = jQuery('input[ng-model="mission.definition.name"]').val();
         storage["description"] = jQuery('textarea[ng-model="mission.definition.description"]').val();
@@ -206,8 +246,8 @@
     }
 
     function resort(rows) {
-        var newrows = rows.sort(function (a, b) { //利用数组的排序方法重新排序对象
-            return $(a).find('span.name')[0].innerText.trim().localeCompare($(b).find('span.name')[0].innerText.trim());  //从大到小
+        var newrows = rows.sort(function(a, b) { //利用数组的排序方法重新排序对象
+            return $(a).find('span.name')[0].innerText.trim().localeCompare($(b).find('span.name')[0].innerText.trim()); //从大到小
         });
         $('.missions-list').empty();
         for (var i = 0; i < newrows.length; i++) {
