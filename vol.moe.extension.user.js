@@ -12,9 +12,9 @@
 // @grant        none
 // ==/UserScript==
 
-(function () {
+(function() {
     'use strict';
-    jQuery(document).ready(function () {
+    jQuery(document).ready(function() {
 
 
         var url = document.documentURI;
@@ -67,7 +67,7 @@
 
             var commentIndexHtml = document.createElement('input');
             commentIndexHtml.id = "commentPageIndex";
-            commentIndexHtml.style.cssText = 'margin-left: 15px';
+            commentIndexHtml.style.cssText = 'margin-left: 15px;width: 35px;';
             commentGoTd.appendChild(commentIndexHtml);
 
 
@@ -85,7 +85,7 @@
             // jQuery('#push_button').after(selectreverseHtml);
             // jQuery('#push_button').after(selectnoneHtml);
             // jQuery('#push_button').after(selectallHtml);
-        } else {  //vol.moe/list   分页按钮class
+        } else { //vol.moe/list   分页按钮class
             var aArr = jQuery('a.weui_btn.weui_btn_mini.weui_btn_default');
             //jQuery('#book_comm_title')
             var urlArr = url.split('/');
@@ -116,8 +116,7 @@
     function do_selectall() {
         var inputs = jQuery('#div_mobi').find('input[type="checkbox"]');
         for (var i = 0; i < inputs.length; i++) {
-            if (jQuery(inputs[i]).prop('checked') == true) {
-            } else {
+            if (jQuery(inputs[i]).prop('checked') == true) {} else {
                 jQuery(inputs[i]).click();
             }
         }
@@ -128,8 +127,7 @@
         for (var i = 0; i < inputs.length; i++) {
             if (jQuery(inputs[i]).prop('checked') == true) {
                 jQuery(inputs[i]).click();
-            } else {
-            }
+            } else {}
         }
     }
 
@@ -141,4 +139,3 @@
     }
 
 })();
-
