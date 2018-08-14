@@ -5,8 +5,8 @@
 // @description  try to take over the world!
 // @author       wongchance
 // @match        https://rate.taobao.com/remark_seller.jhtml*
-// @updateURL    https://github.com/wongchance/JsCollection/raw/master/taobao.rate.seller.user.js
-// @downloadURL  https://github.com/wongchance/JsCollection/raw/master/taobao.rate.seller.user.js
+// @updateURL    https://github.com/wongchance/JsCollection/raw/master/taobao.rate.user.js
+// @downloadURL  https://github.com/wongchance/JsCollection/raw/master/taobao.rate.user.js
 // @require      https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js
 // @grant        none
 // ==/UserScript==
