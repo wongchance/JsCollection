@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         auto.rate.seller
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.2.1
 // @description  try to take over the world!
 // @author       wongchance
 // @match        https://rate.taobao.com/remark_seller.jhtml*
+// @match        https://rate.taobao.com/remarkSeller.jhtml*
 // @match        https://ratewrite.tmall.com/rate_detail.htm*
 // @updateURL    https://github.com/wongchance/JsCollection/raw/master/taobao.rate.user.js
 // @downloadURL  https://github.com/wongchance/JsCollection/raw/master/taobao.rate.user.js
