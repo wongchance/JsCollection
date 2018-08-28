@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         tushuguan.douban.img
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.1.1
 // @description  try to take over the world!
 // @author       wongchance
 // @match        http://*/opcs/custom*
@@ -18,6 +18,21 @@
 
 
     imgRefresh();
+
+    $('#cutomser_commit').css({
+      'background': 'cornflowerblue',
+      'margin-right': '50px'
+    });
+    $('#cutomser_commit').hover(function () {
+        $('#cutomser_commit').css({
+          'background': 'lightblue'
+        });
+      },
+      function () {
+        $('#cutomser_commit').css({
+          'background': 'cornflowerblue'
+        });
+      });
 
     $('div.zdygn').children().eq(2).click(function () {
       searchOnDouban();
