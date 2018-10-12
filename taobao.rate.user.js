@@ -29,7 +29,7 @@
 
 
       setTimeout(function () {
-        jQuery('ul.stars li').find('span.ks-simplestar').each(function () {
+        jQuery('span.ks-simplestar').each(function () {
           jQuery(this).children("img:last-child").click();
         });
       }, 500);
@@ -39,6 +39,9 @@
       setTimeout(function () {
         var inputHtml = '<input value="' + msg + '">';
         $('div.compose-header').after(inputHtml);
+
+        $('input.J_textEditorContent').val(msg);
+
         $('div.compose-sub div[data-star-value=5]').children("span:first-child").click();
       }, 2500);
     }

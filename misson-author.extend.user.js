@@ -11,14 +11,14 @@
 // @grant        none
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
-    jQuery(document).ready(function() {
+    jQuery(document).ready(function () {
 
         // var url = window.location.href;
         // if (url.indexOf('edit') > -1) {
 
-        var t0 = setInterval(function() {
+        var t0 = setInterval(function () {
             if (jQuery('input[ng-model="mission.definition.name"]').length > 0 && jQuery('#savedspStoragebtn').length < 1) {
                 var storageDspButton = '<div class="form-group"><button class="button" id="savedspStoragebtn">save</button> <button class="button" id="loaddspStoragebtn">load</button></div>';
                 jQuery('input[ng-model="mission.definition.name"]').parent().parent().append(storageDspButton);
@@ -246,7 +246,7 @@
     }
 
     function resort(rows) {
-        var newrows = rows.sort(function(a, b) { //利用数组的排序方法重新排序对象
+        var newrows = rows.sort(function (a, b) { //利用数组的排序方法重新排序对象
             return $(a).find('span.name')[0].innerText.trim().localeCompare($(b).find('span.name')[0].innerText.trim()); //从大到小
         });
         $('.missions-list').empty();
