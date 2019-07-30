@@ -27,8 +27,6 @@
                 //clearInterval(t0);
             }
 
-
-
             if ($('button.create-mission-button').length > 0 && jQuery('#alllist').length < 1) {
                 var navbarHtml = '<ul class="nav navbar-nav navbar-login" style=" float: left !important;">' +
                     '<li class="dropdown">' +

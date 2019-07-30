@@ -10,6 +10,14 @@
 // ==/UserScript==
 
 var buttons = [{
+    button: '1',
+    total: 2,
+    name: 1,
+    history: 1,
+    unique: 1,
+    location: 1,
+    safety: 1
+  }, {
     button: '2',
     total: 2,
     name: 2,
