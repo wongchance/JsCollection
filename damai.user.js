@@ -14,6 +14,9 @@
 
 ;(function() {
   'use strict'
+  // 空是全部
+  var itemId = '598970037551'
+
   // 票数第一第二选项
   var choosenItemIndex = [0, 1]
   // 观影人数
@@ -33,7 +36,10 @@
   var choosenDomArray = []
   jQuery(document).ready(function() {
     var url = document.documentURI
-    if (url.indexOf('detail.damai.cn/item.htm') > -1) {
+    if (
+      url.indexOf('detail.damai.cn/item.htm') > -1 &&
+      url.indexOf(itemId) > -1
+    ) {
       var timerInterval = setInterval(() => {
         if (
           jQuery('div.select_right_list .select_right_list_item.sku_item')
