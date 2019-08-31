@@ -21,29 +21,28 @@ chmod +x bbr.sh
 
 # js 
 ```ruby
-var aa = `
-游戏名Fairy of the treasures【CDKey】HHQVI-HYN23-KF97Z
-游戏名Fairy of the treasures - Soundtrack【CDKey】9D7PF-TGPVT-72LFA
-游戏名Ice Cream Factory【CDKey】9NH4R-WPI2Y-D69W8
-游戏名Jammerball【CDKey】5ZRHY-ZP2MJ-IZAQE
-游戏名Falling words【CDKey】J7XEY-4LE6C-49YZJ
-游戏名Vzerthos: The Heir of Thunder【CDKey】5B9FD-DBE3C-JGNMT
-游戏名Gazzel Quest, The Five Magic Stones【CDKey】BXTQG-0V4W3-PCHML
-游戏名The Entity【CDKey】Y0BN3-GPXJ5-D0TNK
-游戏名Katie【CDKey】97IRJ-P846D-T9W06
-游戏名Katie: Gratitude Pack【CDKey】VJYTH-CGPVH-XW0MW
-游戏名PROJECT XINATRA【CDKey】C6FMK-8DAZH-47LX6
-游戏名Marwin and The Evolution Stone【CDKey】JG9GF-2IQV4-QQ0R7
-游戏名CGWallpapers【CDKey】MPZ98-KHKYX-EI2J2
-游戏名Daddy's gone a-hunting【CDKey】405F3-Z4BIM-W5IP3
-游戏名SEGFAULT【CDKey】0EFBE-9Y030-KXNVE
-`;
-var arr = aa.split('\n');
-var arr2 = [];
-for (var i = 0; i < arr.length; i++) {
-    if(arr[i]){
-       arr2.push(arr[i].split('激活码')[1]);
-    }
-}
-console.log(arr2.join(',')); 
+var s = `
+卡号：Trump Vs Rocketman	KA305-W9NDQ-3F64E
+卡号：Lawnmower Game 4: The Final Cut	NJ0Q0-2TJN8-XL68V
+卡号：Gangsta Woman	AD847-V4VVV-DDZ80
+卡号：Deep Race: Space	2043G-HZGN7-52K3E
+卡号：Elon Must - Road to Respect	AL05Q-ET6AX-03Z66
+卡号：Quest For Wartorn Brotherhood	KHFZG-EH34V-NG2XQ
+卡号：Cyborg Invasion Shooter 3: Savior Of The World	859VX-M7PYY-J6VGR
+卡号：Ball Fall	ADXCQ-HH994-4LXWR
+卡号：Gregor Hills Haunted Hospital	FANVN-2J5XE-T6WN5
+卡号：Mission XAM	IRDC6-LXJ5L-J5CKJ
+卡号：STALINGRAD ABATIS	6NHQJ-F5PAK-86DJZ
+卡号：The.Thend.End	KV8T5-43H2J-PYKY2
+卡号：LocoSoccer	8PABB-KLZ2D-Y09G4
+卡号：Monopolist Technological Revolution	MMIFN-TI4ZI-HV4KB
+卡号：SNUSE 221	KGRKY-FKXIR-5IGBD
+卡号：Reveal	I65D5-9KYI3-DY9TF
+卡号：Invasion	25ZAF-4QM04-MEF3N
+卡号：The Resistance	7XDL4-VL4JG-YYB06
+卡号：Smash Halloween Pumpkins The Challenge	L62PY-HVWR2-T270L
+卡号：The Christmas Gifts	7WG4F-VDR7X-FTN92
+`
+var reg = /[0-9A-Z]{5}-[0-9A-Z]{5}-[0-9A-Z]{5}/g; //最后一个g表示要全局匹配
+console.log(s.match(reg).toString());//结果ab,ab,ab，ab
 ```
