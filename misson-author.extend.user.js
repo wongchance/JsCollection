@@ -5,6 +5,7 @@
 // @description  try to take over the world!
 // @author       wongchance
 // @match        https://mission-author-dot-betaspike.appspot.com/*
+// @match        http://missions.ingress.com*
 // @updateURL    https://github.com/wongchance/JsCollection/raw/master/misson-author.extend.user.js
 // @downloadURL  https://github.com/wongchance/JsCollection/raw/master/misson-author.extend.user.js
 // @require      https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js
