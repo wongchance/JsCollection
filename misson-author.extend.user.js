@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Mission Author Extension
 // @namespace    http://tampermonkey.net/
-// @version      0.1.2
+// @version      0.2.0
 // @description  try to take over the world!
 // @author       wongchance
 // @match        https://mission-author-dot-betaspike.appspot.com/*
@@ -12,6 +12,9 @@
 // @require      https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js
 // @grant        none
 // ==/UserScript==
+
+// 0.1.2 20200321 增加网址匹配missions.ingress.com
+// 0.2.0 20200325 增加排序单字节 1，9，10
 
 (function () {
     'use strict';
@@ -246,8 +249,14 @@
     }
 
     function resort(rows) {
+        const reg = /[0-9]+/g;
         var newrows = rows.sort(function (a, b) { //利用数组的排序方法重新排序对象
-            return $(a).find('span.name')[0].innerText.trim().localeCompare($(b).find('span.name')[0].innerText.trim()); //从大到小
+            var aname=$(a).find('span.name')[0].innerText.trim();
+            var bname=$(b).find('span.name')[0].innerText.trim();
+            let v0 = aname.replace(reg, v => v.padStart(10, '0'));
+            let v1 = bname.replace(reg, v => v.padStart(10, '0'));
+            return v0.localeCompare(v1);
+            //return aname.localeCompare(bname); //从大到小
         });
         $('.missions-list').empty();
         for (var i = 0; i < newrows.length; i++) {
