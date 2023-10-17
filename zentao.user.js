@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         zentao
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  try to take over the world!
 // @author       wongchance
 // @match        http://myjob.zjshenyue.cn/*
