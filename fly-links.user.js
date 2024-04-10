@@ -1,414 +1,621 @@
 // ==UserScript==
-// @id             fly-links@wongchance
+// @author         Fly33、wongchance
 // @name           IITC plugin: Fly Links Fixer
-// @category       Layer
-// @version        0.2.2
+// @category       Draw
+// @version        0.5.2
+// @description    Calculate how to link the portals to create the largest tidy set of nested fields. Enable from the layer chooser.
+// @id             fly-links
+// @namespace      https://github.com/IITC-CE/ingress-intel-total-conversion
 // @updateURL      https://github.com/wongchance/iitcJs/raw/master/fly-links.user.js
 // @downloadURL    https://github.com/wongchance/iitcJs/raw/master/fly-links.user.js
-// @description    [fixer] Calculate how to link the portals to create the largest tidy set of nested fields. Enable from the layer chooser.
-// @include        https://*.ingress.com/intel*
-// @include        http://*.ingress.com/intel*
-// @match          https://*.ingress.com/intel*
-// @match          http://*.ingress.com/intel*
-// @include        https://*.ingress.com/mission/*
-// @include        http://*.ingress.com/mission/*
-// @match          https://*.ingress.com/mission/*
-// @match          http://*.ingress.com/mission/*
+// @match          https://intel.ingress.com/*
+// @match          https://intel-x.ingress.com/*
+// @icon           https://iitc.app/extras/plugin-icons/fly-links.png
+// @icon64         https://iitc.app/extras/plugin-icons/fly-links-64.png
 // @grant          none
 // ==/UserScript==
 
-
 function wrapper(plugin_info) {
-    // ensure plugin framework is there, even if iitc is not yet loaded
-    if (typeof window.plugin !== 'function') window.plugin = function () { };
+  // ensure plugin framework is there, even if iitc is not yet loaded
+  if (typeof window.plugin !== 'function') window.plugin = function () {}
 
-    //PLUGIN AUTHORS: writing a plugin outside of the IITC build environment? if so, delete these lines!!
-    //(leaving them in place might break the 'About IITC' page or break update checks)
-    plugin_info.buildName = 'iitc';
-    plugin_info.dateTimeVersion = '0.1';
-    plugin_info.pluginId = 'fly-links';
-    //END PLUGIN AUTHORS NOTE
+  //PLUGIN AUTHORS: writing a plugin outside of the IITC build environment? if so, delete these lines!!
+  //(leaving them in place might break the 'About IITC' page or break update checks)
+  plugin_info.buildName = 'release'
+  plugin_info.dateTimeVersion = '2024-03-20-144515'
+  plugin_info.pluginId = 'fly-links'
+  //END PLUGIN AUTHORS NOTE
 
+  /* exported setup, changelog --eslint */
 
-    //not in FlyPortals wongchance
-    window.filterFlyPortalIds = [];
-    window.filterFlyMode = 'include';
+  var changelog = [
+    {
+      version: '0.5.1',
+      changes: [
+        'Version upgrade due to a change in the wrapper: added plugin icon',
+      ],
+    },
+  ]
 
-    // PLUGIN START ////////////////////////////////////////////////////////
+  // use own namespace for plugin
+  var flyLinks = {}
+  window.plugin.flyLinks = flyLinks
 
-    // use own namespace for plugin
-    window.plugin.flyLinks = function () { };
+  //not in FlyPortals wongchance
+  window.filterFlyPortalIds = []
+  window.filterFlyMode = 'include'
 
-    // const values
-    window.plugin.flyLinks.MAX_PORTALS_TO_OBSERVE = 1000;
-    window.plugin.flyLinks.MAX_PORTALS_TO_LINK = 100;
-    // zoom level used for projecting points between latLng and pixel coordinates. may affect precision of triangulation
-    window.plugin.flyLinks.PROJECT_ZOOM = 16;
+  // const values
+  flyLinks.MAX_PORTALS_TO_LINK = 100
 
+  flyLinks.linksLayerGroup = null
+  flyLinks.fieldsLayerGroup = null
 
-    window.plugin.flyLinks.linksLayerGroup = null;
-    window.plugin.flyLinks.fieldsLayerGroup = null;
+  flyLinks.updateLayer = function () {
+    if (
+      !window.map.hasLayer(flyLinks.linksLayerGroup) &&
+      !window.map.hasLayer(flyLinks.fieldsLayerGroup)
+    ) {
+      return
+    }
 
-    window.plugin.flyLinks.updateLayer = function () {
-        if (!window.map.hasLayer(window.plugin.flyLinks.linksLayerGroup) &&
-            !window.map.hasLayer(window.plugin.flyLinks.fieldsLayerGroup))
-            return;
+    flyLinks.linksLayerGroup.clearLayers()
+    flyLinks.fieldsLayerGroup.clearLayers()
 
-        window.plugin.flyLinks.linksLayerGroup.clearLayers();
-        window.plugin.flyLinks.fieldsLayerGroup.clearLayers();
-        var ctrl = [$('.leaflet-control-layers-selector + span:contains("Fly links")').parent(),
-        $('.leaflet-control-layers-selector + span:contains("Fly fields")').parent()
-        ];
-        if (Object.keys(window.portals).length > window.plugin.flyLinks.MAX_PORTALS_TO_OBSERVE) {
-            $.each(ctrl, function (guid, ctl) { ctl.addClass('disabled').attr('title', 'Too many portals: ' + Object.keys(window.portals).length); });
-            return;
+    var distance = function (a, b) {
+      return Math.sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y))
+    }
+
+    var drawLink = function (a, b, style) {
+      var poly = L.polyline([a.latlng, b.latlng], style)
+      poly.addTo(flyLinks.linksLayerGroup)
+    }
+
+    var drawField = function (a, b, c, style) {
+      var poly = L.polygon([a.latlng, b.latlng, c.latlng], style)
+      poly.addTo(flyLinks.fieldsLayerGroup)
+    }
+
+    var EPS = 1e-9
+    var det = function (a, b, c) {
+      return (
+        a.x * b.y - a.y * b.x + b.x * c.y - b.y * c.x + c.x * a.y - c.y * a.x
+      )
+    }
+
+    var convexHull = function (points) {
+      if (points.length < 3) {
+        return []
+      }
+      var result = []
+      var func = function _func(ai, bi, index) {
+        var maxd = 0
+        var maxdi = -1
+        var a = points[ai]
+        var b = points[bi]
+        var _index = []
+        for (var i = 0; i < index.length; ++i) {
+          var c = points[index[i]]
+          var d = -det(a, b, c)
+          if (d > EPS) {
+            _index.push(index[i])
+          }
+          if (maxd < d - EPS) {
+            maxd = d
+            maxdi = index[i]
+          }
         }
-
-        var locations = [];
-
-        var bounds = map.getBounds();
-        if (filterFlyMode == 'exclude') {
-            $.each(window.portals, function (guid, portal) {
-                var ll = portal.getLatLng();
-                if (bounds.contains(ll) && filterFlyPortalIds.indexOf(guid) < 0) {
-                    var p = map.project(portal.getLatLng(), window.plugin.flyLinks.PROJECT_ZOOM);
-                    locations.push(p);
-                }
-            });
-        } else { //include mode wongchance
-            $.each(window.portals, function (guid, portal) {
-                var ll = portal.getLatLng();
-                if (bounds.contains(ll) && filterFlyPortalIds.indexOf(guid) > -1) {
-                    var p = map.project(portal.getLatLng(), window.plugin.flyLinks.PROJECT_ZOOM);
-                    locations.push(p);
-                }
-            });
+        if (maxdi !== -1) {
+          _func(ai, maxdi, _index)
+          _func(maxdi, bi, _index)
+        } else {
+          result.push(ai)
         }
-
-        //count portal in map
-        var mapPortalCount = 0;
-        $.each(window.portals, function (guid, portal) {
-            var ll = portal.getLatLng();
-            if (bounds.contains(ll)) {
-                mapPortalCount++;
-            }
-        });
-        $('#mapPortalCount').html(mapPortalCount + ' portals in current map');
-
-        var distance = function (a, b) {
-            return Math.sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
-        };
-
-        var drawLink = function (a, b, style) {
-            var alatlng = map.unproject(a, window.plugin.flyLinks.PROJECT_ZOOM);
-            var blatlng = map.unproject(b, window.plugin.flyLinks.PROJECT_ZOOM);
-
-            var poly = L.polyline([alatlng, blatlng], style);
-            poly.addTo(window.plugin.flyLinks.linksLayerGroup);
-        };
-
-        var drawField = function (a, b, c, style) {
-            var alatlng = map.unproject(a, window.plugin.flyLinks.PROJECT_ZOOM);
-            var blatlng = map.unproject(b, window.plugin.flyLinks.PROJECT_ZOOM);
-            var clatlng = map.unproject(c, window.plugin.flyLinks.PROJECT_ZOOM);
-
-            var poly = L.polygon([alatlng, blatlng, clatlng], style);
-            poly.addTo(window.plugin.flyLinks.fieldsLayerGroup);
-        };
-
-        if (locations.length > window.plugin.flyLinks.MAX_PORTALS_TO_LINK) {
-            $.each(ctrl, function (guid, ctl) { ctl.addClass('disabled').attr('title', 'Too many portals (linked/observed): ' + locations.length + '/' + Object.keys(window.portals).length); });
-            return;
+      }
+      var minxi = 0
+      var maxxi = 0
+      var index = []
+      for (var i = 0; i < points.length; ++i) {
+        index.push(i)
+        if (points[minxi].x > points[i].x) {
+          minxi = i
         }
-        $.each(ctrl, function (guid, ctl) { ctl.removeClass('disabled').attr('title', 'portals (linked/observed): ' + locations.length + '/' + Object.keys(window.portals).length); });
-
-        var EPS = 1e-9;
-        var det = function (a, b, c) {
-            return a.x * b.y - a.y * b.x + b.x * c.y - b.y * c.x + c.x * a.y - c.y * a.x;
-        };
-
-        var convexHull = function (points) {
-            if (points.length < 3)
-                return [];
-            var result = [];
-            var func = function _func(ai, bi, index) {
-                var maxd = 0;
-                var maxdi = -1;
-                var a = points[ai];
-                var b = points[bi];
-                var _index = [];
-                for (var i = 0; i < index.length; ++i) {
-                    var c = points[index[i]];
-                    var d = -det(a, b, c);
-                    if (d > EPS) {
-                        _index.push(index[i]);
-                    }
-                    if (maxd < d - EPS) {
-                        maxd = d;
-                        maxdi = index[i];
-                    }
-                }
-                if (maxdi != -1) {
-                    _func(ai, maxdi, _index);
-                    _func(maxdi, bi, _index);
-                } else {
-                    result.push(ai);
-                }
-            };
-            var minxi = 0;
-            var maxxi = 0;
-            var index = [];
-            for (var i = 0; i < points.length; ++i) {
-                index.push(i);
-                if (points[minxi].x > points[i].x)
-                    minxi = i;
-                if (points[maxxi].x < points[i].x)
-                    maxxi = i;
-            }
-            func(minxi, maxxi, index);
-            func(maxxi, minxi, index);
-            return result;
-        };
-
-        var index = convexHull(locations);
-
-        var triangulate = function (index, locations) {
-            if (index.length == 0)
-                return { edges: [], triangles: [] };
-            var data = [];
-            var subtriangulate = function _subtriangulate(ai, bi, ci, index) {
-                var _i = [ai, bi, ci].sort(function (a, b) { return a - b; });
-                if (data[_i[0]] === undefined)
-                    data[_i[0]] = [];
-                if (data[_i[0]][_i[1] - _i[0]] === undefined)
-                    data[_i[0]][_i[1] - _i[0]] = [];
-                if (data[_i[0]][_i[1] - _i[0]][_i[2] - _i[1]] === undefined) {
-                    var _index = [];
-                    for (var i = 0; i < index.length; ++i) {
-                        var detc = det(locations[ai], locations[bi], locations[index[i]]);
-                        var deta = det(locations[bi], locations[ci], locations[index[i]]);
-                        var detb = det(locations[ci], locations[ai], locations[index[i]]);
-                        if (deta > EPS && detb > EPS && detc > EPS) {
-                            _index.push(index[i]);
-                        }
-                    }
-                    var besth = 0;
-                    var besthi = -1;
-                    if (_index.length == 0) {
-                        var a = locations[ai];
-                        var b = locations[bi];
-                        var c = locations[ci];
-                        var s = Math.abs(det(a, b, c));
-                        var ch = s / distance(a, b);
-                        var ah = s / distance(b, c);
-                        var bh = s / distance(c, a);
-                        besth = Math.min(ah, bh, ch);
-                        besthi = -1;
-                    } else {
-                        var besths = 0;
-                        for (var j = 0; j < _index.length; ++j) {
-                            var chj = _subtriangulate(ai, bi, _index[j], _index);
-                            var ahj = _subtriangulate(bi, ci, _index[j], _index);
-                            var bhj = _subtriangulate(ci, ai, _index[j], _index);
-                            var _besth = Math.min(ahj, bhj, chj);
-                            var _besths = ahj + bhj + chj;
-                            if (besth < _besth || Math.abs(besth - _besth) <= EPS && besths < _besths) {
-                                besth = _besth;
-                                besths = _besths;
-                                besthi = _index[i];
-                            }
-                        }
-                    }
-                    data[_i[0]][_i[1] - _i[0]][_i[2] - _i[1]] = { height: besth, index: besthi };
-                }
-                return data[_i[0]][_i[1] - _i[0]][_i[2] - _i[1]].height;
-            };
-            var subindex = [];
-            for (var i = 0; i < locations.length; ++i) {
-                subindex.push(i);
-            }
-            var best = [];
-            for (var len = 1; len <= index.length - 1; ++len) {
-                best[len] = [];
-                for (var k = 0; k < index.length - len; ++k) {
-                    var t = 0;
-                    var tlen = -1;
-                    for (var _len = 1; _len <= len - 1; ++_len) {
-                        var _t = 0;
-                        $.each([best[_len][k].height, best[len - _len][k + _len].height, subtriangulate(index[k], index[k + _len], index[k + len], subindex)], function (guid, __t) {
-                            if (__t == 0)
-                                return;
-                            if (_t == 0 || _t > __t)
-                                _t = __t;
-                        });
-                        if (t == 0 || t < _t) {
-                            t = _t;
-                            tlen = _len;
-                        }
-                    }
-                    best[len][k] = { height: t, length: tlen };
-                }
-            }
-
-            var edges = [];
-            var triangles = [];
-            var makesubtriangulation = function _makesubtriangulation(ai, bi, ci, depth) {
-                var _i = [ai, bi, ci].sort(function (a, b) { return a - b; });
-                if (data[_i[0]][_i[1] - _i[0]][_i[2] - _i[1]].index == -1) {
-                    triangles.push(new window.plugin.flyLinks.Triangle(locations[ai], locations[bi], locations[ci], depth));
-                } else {
-                    _makesubtriangulation(ai, bi, data[_i[0]][_i[1] - _i[0]][_i[2] - _i[1]].index, depth + 1);
-                    _makesubtriangulation(bi, ci, data[_i[0]][_i[1] - _i[0]][_i[2] - _i[1]].index, depth + 1);
-                    _makesubtriangulation(ci, ai, data[_i[0]][_i[1] - _i[0]][_i[2] - _i[1]].index, depth + 1);
-                    edges.push(new window.plugin.flyLinks.Edge(locations[ai], locations[data[_i[0]][_i[1] - _i[0]][_i[2] - _i[1]].index], depth));
-                    edges.push(new window.plugin.flyLinks.Edge(locations[bi], locations[data[_i[0]][_i[1] - _i[0]][_i[2] - _i[1]].index], depth));
-                    edges.push(new window.plugin.flyLinks.Edge(locations[ci], locations[data[_i[0]][_i[1] - _i[0]][_i[2] - _i[1]].index], depth));
-                }
-            };
-            var maketriangulation = function _maketriangulation(len, a) {
-                edges.push(new window.plugin.flyLinks.Edge(locations[index[a]], locations[index[a + len]], 0));
-                if (best[len][a].length == -1)
-                    return;
-                makesubtriangulation(index[a], index[a + best[len][a].length], index[a + len], 1);
-                _maketriangulation(best[len][a].length, a);
-                _maketriangulation(len - best[len][a].length, a + best[len][a].length);
-            };
-            maketriangulation(index.length - 1, 0);
-            return { edges: edges, triangles: triangles };
-        };
-
-        var triangulation = triangulate(index, locations);
-        var edges = triangulation.edges;
-        var triangles = triangulation.triangles;
-
-        $.each(edges, function (idx, edge) {
-            drawLink(edge.a, edge.b, {
-                color: '#FF0000',
-                opacity: 1,
-                weight: 1.5,
-                clickable: false,
-                smoothFactor: 10,
-                dashArray: [6, 4],
-            });
-        });
-
-        $.each(triangles, function (idx, triangle) {
-            drawField(triangle.a, triangle.b, triangle.c, {
-                stroke: false,
-                fill: true,
-                fillColor: '#FF0000',
-                fillOpacity: 1 - Math.pow(0.85, triangle.depth),
-                clickable: false,
-            });
-        });
-    };
-
-    //add checkbox wongchance
-    window.plugin.flyLinks.portalDetail = function (data) {
-        var ischecked = '';
-        if (filterFlyPortalIds.indexOf(data.guid) > -1) {
-            ischecked = 'checked=true';
+        if (points[maxxi].x < points[i].x) {
+          maxxi = i
         }
+      }
+      func(minxi, maxxi, index)
+      func(maxxi, minxi, index)
+      return result
+    }
 
-        $('.linkdetails').append('<aside><input id="flyId" type="checkbox" onclick="window.plugin.flyLinks.updateFilterFlyId()" ' + ischecked +
-            ' value="' + data.guid + '">' + filterFlyMode + ' From Flys</aside>');
-    };
+    var triangulate2 = function (
+      index,
+      line_indexes,
+      line_edge_indexes,
+      locations
+    ) {
+      if (index.length === 0) {
+        return { edges: [], triangles: [] }
+      }
+      var data = []
+      var subtriangulate = function _subtriangulate(ai, bi, ci, index) {
+        var _i = [ai, bi, ci].sort(function (a, b) {
+          return a - b
+        })
+        if (data[_i[0]] === undefined) {
+          data[_i[0]] = []
+        }
+        if (data[_i[0]][_i[1] - _i[0]] === undefined) {
+          data[_i[0]][_i[1] - _i[0]] = []
+        }
+        if (data[_i[0]][_i[1] - _i[0]][_i[2] - _i[1]] === undefined) {
+          var _index = []
+          for (var i = 0; i < index.length; ++i) {
+            var detc = det(locations[ai], locations[bi], locations[index[i]])
+            var deta = det(locations[bi], locations[ci], locations[index[i]])
+            var detb = det(locations[ci], locations[ai], locations[index[i]])
+            if (deta > EPS && detb > EPS && detc > EPS) {
+              _index.push(index[i])
+            }
+          }
+          var besth = 0
+          var besthi = -1
+          var i
+          for (i = 0; i < line_indexes.length; ++i) {
+            var f0 = _index.indexOf(line_indexes[i][0]) !== -1
+            var f1 = _index.indexOf(line_indexes[i][1]) !== -1
+            if (f0 && !f1 && _i.indexOf(line_indexes[i][1]) === -1) {
+              break
+            }
+            if (f1 && !f0 && _i.indexOf(line_indexes[i][0]) === -1) {
+              break
+            }
+          }
+          if (i < line_indexes.length) {
+            besth = 0
+            besthi = -1
+          } else if (_index.length === 0) {
+            var a = locations[ai]
+            var b = locations[bi]
+            var c = locations[ci]
+            var s = Math.abs(det(a, b, c))
+            var ch = s / distance(a, b)
+            var ah = s / distance(b, c)
+            var bh = s / distance(c, a)
+            besth = Math.min(ah, bh, ch)
+            besthi = -1
+          } else {
+            var besths = 0
+            for (var i = 0; i < _index.length; ++i) {
+              var ch = _subtriangulate(ai, bi, _index[i], _index)
+              var ah = _subtriangulate(bi, ci, _index[i], _index)
+              var bh = _subtriangulate(ci, ai, _index[i], _index)
+              var _besth = Math.min(ah, bh, ch)
+              var _besths = ah + bh + ch
+              if (
+                besth < _besth ||
+                (Math.abs(besth - _besth) <= EPS && besths < _besths)
+              ) {
+                besth = _besth
+                besths = _besths
+                besthi = _index[i]
+              }
+            }
+          }
+          data[_i[0]][_i[1] - _i[0]][_i[2] - _i[1]] = {
+            height: besth,
+            index: besthi,
+          }
+        }
+        return data[_i[0]][_i[1] - _i[0]][_i[2] - _i[1]].height
+      }
+      var subindex = []
+      for (var i = 0; i < locations.length; ++i) {
+        subindex.push(i)
+      }
+      var best = []
+      best[1] = []
+      for (var k = 0; k < index.length - 1; ++k) {
+        best[1][k] = { height: Infinity, length: -1 }
+      }
+      for (var len = 2; len <= index.length - 1; ++len) {
+        best[len] = []
+        for (var k = 0; k < index.length - len; ++k) {
+          var t = 0
+          var tlen = -1
+          var i
+          for (i = 0; i < line_edge_indexes.length; ++i) {
+            var indexes = line_edge_indexes[i]
+            var i0 = indexes[0],
+              i1 = indexes[1]
+            if (
+              (k < i0 && i0 < k + len && (i1 < k || k + len < i1)) ||
+              (k < i1 && i1 < k + len && (i0 < k || k + len < i0))
+            ) {
+              break
+            }
+          }
+          if (i >= line_edge_indexes.length) {
+            for (var _len = 1; _len <= len - 1; ++_len) {
+              var _t = Math.min(
+                best[_len][k].height,
+                best[len - _len][k + _len].height,
+                subtriangulate(
+                  index[k],
+                  index[k + _len],
+                  index[k + len],
+                  subindex
+                )
+              )
+              if (t < _t) {
+                t = _t
+                tlen = _len
+              }
+            }
+          }
+          best[len][k] = { height: t, length: tlen }
+        }
+      }
 
-    //update exclude/include ids wongchance
-    window.plugin.flyLinks.updateFilterFlyId = function () {
-        var flyId = $('#flyId').val();
-        if (document.getElementById("flyId").checked) {
-            if (filterFlyPortalIds.indexOf(flyId) > -1) {
+      var edges = []
+      var triangles = []
+      var makesubtriangulation = function _makesubtriangulation(
+        ai,
+        bi,
+        ci,
+        depth
+      ) {
+        var _i = [ai, bi, ci].sort(function (a, b) {
+          return a - b
+        })
+        if (data[_i[0]][_i[1] - _i[0]][_i[2] - _i[1]].index === -1) {
+          triangles.push(
+            new flyLinks.Triangle(
+              locations[ai],
+              locations[bi],
+              locations[ci],
+              depth
+            )
+          )
+        } else {
+          _makesubtriangulation(
+            ai,
+            bi,
+            data[_i[0]][_i[1] - _i[0]][_i[2] - _i[1]].index,
+            depth + 1
+          )
+          _makesubtriangulation(
+            bi,
+            ci,
+            data[_i[0]][_i[1] - _i[0]][_i[2] - _i[1]].index,
+            depth + 1
+          )
+          _makesubtriangulation(
+            ci,
+            ai,
+            data[_i[0]][_i[1] - _i[0]][_i[2] - _i[1]].index,
+            depth + 1
+          )
+          edges.push(
+            new flyLinks.Edge(
+              locations[ai],
+              locations[data[_i[0]][_i[1] - _i[0]][_i[2] - _i[1]].index],
+              depth
+            )
+          )
+          edges.push(
+            new flyLinks.Edge(
+              locations[bi],
+              locations[data[_i[0]][_i[1] - _i[0]][_i[2] - _i[1]].index],
+              depth
+            )
+          )
+          edges.push(
+            new flyLinks.Edge(
+              locations[ci],
+              locations[data[_i[0]][_i[1] - _i[0]][_i[2] - _i[1]].index],
+              depth
+            )
+          )
+        }
+      }
+      var maketriangulation = function _maketriangulation(len, a) {
+        edges.push(
+          new flyLinks.Edge(locations[index[a]], locations[index[a + len]], 0)
+        )
+        if (best[len][a].length === -1) {
+          return
+        }
+        makesubtriangulation(
+          index[a],
+          index[a + best[len][a].length],
+          index[a + len],
+          1
+        )
+        _maketriangulation(best[len][a].length, a)
+        _maketriangulation(len - best[len][a].length, a + best[len][a].length)
+      }
+      if (best[index.length - 1][0].height > 0) {
+        maketriangulation(index.length - 1, 0)
+      } else {
+        console.log('Fly links: no triangulation')
+      }
+      return { edges: edges, triangles: triangles }
+    }
+
+    var triangulate = function (locations, lines) {
+      var index = convexHull(locations)
+      var line_indexes = filterLines(locations, lines)
+      var line_edge_indexes = []
+      for (var i = 0; i < line_indexes.length; ++i) {
+        var i0 = index.indexOf(line_indexes[i][0])
+        var i1 = index.indexOf(line_indexes[i][1])
+        if (i0 === -1 || i1 === -1) {
+          continue
+        }
+        line_edge_indexes.push([i0, i1])
+      }
+      return triangulate2(index, line_indexes, line_edge_indexes, locations)
+    }
+
+    var edges = []
+    var triangles = []
+
+    var lines = []
+    var drawTools = window.plugin.drawTools
+    if (drawTools) {
+      var polylines = []
+      drawTools.drawnItems.eachLayer(function (layer) {
+        if (layer instanceof L.GeodesicPolyline) {
+          polylines.push(layer)
+        }
+      })
+      polylines.forEach(function (polyline) {
+        if (!polyline._rings) {
+          return
+        }
+        var p = polyline._rings[0]
+        for (var j = 1; j < p.length; ++j) {
+          lines.push([p[j - 1], p[j]])
+        }
+      })
+    }
+
+    var filterLines = function (points, lines) {
+      var result = []
+      var findPoint = function (points, point) {
+        for (var i = 0; i < points.length; ++i) {
+          if (points[i].x === point.x && points[i].y === point.y) {
+            return i
+          }
+        }
+        return -1
+      }
+      for (var i = 0; i < lines.length; ++i) {
+        var a = findPoint(points, lines[i][0])
+        if (a === -1) {
+          continue
+        }
+        var b = findPoint(points, lines[i][1])
+        if (b === -1) {
+          continue
+        }
+        result.push([a, b])
+      }
+      return result
+    }
+
+    var filters =
+      drawTools &&
+      drawTools.getLocationFilters &&
+      drawTools.getLocationFilters()
+    // fallback to map bounds if no drawn polygon (or no drawtools)
+    if (!filters || !filters.length) {
+      var bounds = map.getBounds()
+      filters = [
+        function (p) {
+          return bounds.contains(p.getLatLng())
+        },
+      ]
+    }
+
+    filters.forEach(function (filter) {
+      var points = []
+      for (var guid in window.portals) {
+        var location = window.portals[guid]
+        if (filter(location)) {
+          //exclude mode wongchance
+          if (filterFlyMode == 'exclude') {
+            if (filterFlyPortalIds.indexOf(guid) > -1) {
             } else {
-                filterFlyPortalIds.push(flyId);
+              var point = location._point.clone()
+              point.latlng = location._latlng
+              points.push(point)
             }
-        } else {
-            if (filterFlyPortalIds.indexOf(flyId) > -1) {
-                filterFlyPortalIds.splice(filterFlyPortalIds.indexOf(flyId), 1);
-            }
+          } else if (filterFlyPortalIds.indexOf(guid) > -1) {
+            //include mode wongchance
+            var point = location._point.clone()
+            point.latlng = location._latlng
+            points.push(point)
+          }
         }
-        //var flyStr=filterFlyPortalIds.join(',');
-        //alert(flyStr);
+      }
 
-    };
+      $('#legacy-toolbox-btn-mapPortalCount').html(points.length + ' portals for flyLinks');
 
+      if (points.length >= flyLinks.MAX_PORTALS_TO_LINK) {
+        console.log('Some polygon contains more than '+flyLinks.MAX_PORTALS_TO_LINK+' portals.')
+        // alert("Some polygon contains more than 100 portals.");
+        return
+      }
+      if (!points.length) return
+      var triangulation = triangulate(points, lines)
+      edges = edges.concat(triangulation.edges)
+      triangles = triangles.concat(triangulation.triangles)
+    })
 
-    window.plugin.flyLinks.Edge = function (a, b, depth) {
-        this.a = a;
-        this.b = b;
-        this.depth = depth;
-    };
+    $.each(edges, function (idx, edge) {
+      drawLink(edge.a, edge.b, {
+        color: '#FF0000',
+        opacity: 1,
+        weight: 1.5,
+        interactive: false,
+        smoothFactor: 10,
+        dashArray: [6, 4],
+      })
+    })
 
-    window.plugin.flyLinks.Triangle = function (a, b, c, depth) {
-        this.a = a;
-        this.b = b;
-        this.c = c;
-        this.depth = depth;
-    };
+    $.each(triangles, function (idx, triangle) {
+      drawField(triangle.a, triangle.b, triangle.c, {
+        stroke: false,
+        fill: true,
+        fillColor: '#FF0000',
+        fillOpacity: 1 - Math.pow(0.85, triangle.depth),
+        interactive: false,
+      })
+    })
+  }
 
-    //wongchance resetids
-    window.plugin.flyLinks.ResetFlyids = function () {
-        filterFlyPortalIds = [];
-        dialog({
-            title: 'flyIds',
-            html: 'Succeed to reset your flyIds!'
-        });
-    };
-    //wongchance updateFlyMode(include or exclude)
-    window.plugin.flyLinks.updateFlyMode = function () {
-        if (filterFlyMode == 'exclude') {
-            filterFlyMode = 'include';
-        } else {
-            filterFlyMode = 'exclude';
-        }
-        var htmlStr = '<div>Succeed to change FlyMode!</div> ';
-        htmlStr += '<div style=“clear:both;”>----</div> ';
-        htmlStr += '<div>Now you are in "' + filterFlyMode + '" mode</div> ';
-        dialog({
-            title: 'flyMode ',
-            html: htmlStr
-        });
-    };
+  //add checkbox wongchance
+  flyLinks.portalDetail = function (data) {
+    var ischecked = ''
+    if (filterFlyPortalIds.indexOf(data.guid) > -1) {
+      ischecked = 'checked=true'
+    }
 
-    window.plugin.flyLinks.setup = function () {
-        window.plugin.flyLinks.linksLayerGroup = new L.LayerGroup();
-        window.plugin.flyLinks.fieldsLayerGroup = new L.LayerGroup();
+    $('.linkdetails').append(
+      '<aside><input id="flyId" type="checkbox" onclick="window.plugin.flyLinks.updateFilterFlyId()" ' +
+        ischecked +
+        ' value="' +
+        data.guid +
+        '">' +
+        filterFlyMode +
+        ' From Flys</aside>'
+    )
+  }
 
-        window.addHook('mapDataRefreshEnd', function (e) {
-            window.plugin.flyLinks.updateLayer();
-        });
+  //update exclude/include ids wongchance
+  flyLinks.updateFilterFlyId = function () {
+    var flyId = $('#flyId').val()
+    if (document.getElementById('flyId').checked) {
+      if (filterFlyPortalIds.indexOf(flyId) > -1) {
+      } else {
+        filterFlyPortalIds.push(flyId)
+      }
+    } else {
+      if (filterFlyPortalIds.indexOf(flyId) > -1) {
+        filterFlyPortalIds.splice(filterFlyPortalIds.indexOf(flyId), 1)
+      }
+    }
+    //var flyStr=filterFlyPortalIds.join(',');
+    //alert(flyStr);
+  }
 
-        window.map.on('moveend', function () {
-            window.plugin.flyLinks.updateLayer();
-        });
+  flyLinks.Edge = function (a, b, depth) {
+    this.a = a
+    this.b = b
+    this.depth = depth
+  }
 
-        //addHook wongchance
-        window.addHook('portalDetailsUpdated', window.plugin.flyLinks.portalDetail);
-        $('#toolbox').append('<a tabindex="0" onclick="plugin.flyLinks.ResetFlyids();">Reset Fly Portals</a>');
-        $('#toolbox').append('<a tabindex="0" onclick="plugin.flyLinks.updateFlyMode();">Change Fly Mode</a>');
-        $('#toolbox').append('<a tabindex="0" id="mapPortalCount">0 portals in current map</a>');
+  flyLinks.Triangle = function (a, b, c, depth) {
+    this.a = a
+    this.b = b
+    this.c = c
+    this.depth = depth
+  }
 
+  //wongchance resetids
+  flyLinks.ResetFlyids = function () {
+    filterFlyPortalIds = []
+    dialog({
+      title: 'flyIds',
+      html: 'Succeed to reset your flyIds!',
+    })
+  }
+  //wongchance updateFlyMode(include or exclude)
+  flyLinks.updateFlyMode = function () {
+    if (filterFlyMode == 'exclude') {
+      filterFlyMode = 'include'
+    } else {
+      filterFlyMode = 'exclude'
+    }
+    var htmlStr = '<div>Succeed to change FlyMode!</div> '
+    htmlStr += '<div style=“clear:both;”>----</div> '
+    htmlStr += '<div>Now you are in "' + filterFlyMode + '" mode</div> '
+    dialog({
+      title: 'flyMode ',
+      html: htmlStr,
+    })
+  }
 
-        //$('#toolbox').append('<aside><input id="flymode" type="checkbox" onclick="window.plugin.flyLinks.updateFlyMode()" ' + ischecked + ' value="' + '' + '">ChangeFlyMode</aside>');
+  function setup() {
+    flyLinks.linksLayerGroup = L.layerGroup()
+    flyLinks.fieldsLayerGroup = L.layerGroup()
 
-        window.addLayerGroup('Fly links', window.plugin.flyLinks.linksLayerGroup, false);
-        window.addLayerGroup('Fly fields', window.plugin.flyLinks.fieldsLayerGroup, false);
+    function update() {
+      if (
+        !map.hasLayer(flyLinks.linksLayerGroup) ||
+        !map.hasLayer(flyLinks.fieldsLayerGroup)
+      ) {
+        flyLinks.updateLayer()
+      }
+    }
+    flyLinks.linksLayerGroup.on('add', update)
+    flyLinks.fieldsLayerGroup.on('add', update)
 
-    };
-    var setup = window.plugin.flyLinks.setup;
+    window.addHook('mapDataRefreshEnd', function () {
+      flyLinks.updateLayer()
+    })
 
-    // PLUGIN END //////////////////////////////////////////////////////////
+    window.map.on('moveend', function () {
+      flyLinks.updateLayer()
+    })
 
+    //addHook wongchance
+    window.addHook('portalDetailsUpdated', flyLinks.portalDetail)
+    $('#toolbox').append(
+      '<a tabindex="0" onclick="plugin.flyLinks.ResetFlyids();">Reset Fly Portals</a>'
+    )
+    $('#toolbox').append(
+      '<a tabindex="0" onclick="plugin.flyLinks.updateFlyMode();">Change Fly Mode</a>'
+    )
+    $('#toolbox').append(
+      '<a tabindex="0" id="mapPortalCount">0 portals for flyLinks</a>'
+    )
 
-    setup.info = plugin_info; //add the script info data to the function as a property
-    if (!window.bootPlugins) window.bootPlugins = [];
-    window.bootPlugins.push(setup);
-    // if IITC has already booted, immediately run the 'setup' function
-    if (window.iitcLoaded && typeof setup === 'function') setup();
+    var drawTools = window.plugin.drawTools
+    if (drawTools && drawTools.filterEvents) {
+      drawTools.filterEvents.on('changed', flyLinks.updateLayer)
+    }
+
+    window.layerChooser.addOverlay(flyLinks.linksLayerGroup, 'Fly links', {
+      default: false,
+    })
+    window.layerChooser.addOverlay(flyLinks.fieldsLayerGroup, 'Fly fields', {
+      default: false,
+    })
+  }
+
+  setup.info = plugin_info //add the script info data to the function as a property
+  if (typeof changelog !== 'undefined') setup.info.changelog = changelog
+  if (!window.bootPlugins) window.bootPlugins = []
+  window.bootPlugins.push(setup)
+  // if IITC has already booted, immediately run the 'setup' function
+  if (window.iitcLoaded && typeof setup === 'function') setup()
 } // wrapper end
 // inject code into site context
-var script = document.createElement('script');
-var info = {};
-if (typeof GM_info !== 'undefined' && GM_info && GM_info.script) info.script = { version: GM_info.script.version, name: GM_info.script.name, description: GM_info.script.description };
-script.appendChild(document.createTextNode('(' + wrapper + ')(' + JSON.stringify(info) + ');'));
-(document.body || document.head || document.documentElement).appendChild(script);
+var script = document.createElement('script')
+var info = {}
+if (typeof GM_info !== 'undefined' && GM_info && GM_info.script)
+  info.script = {
+    version: GM_info.script.version,
+    name: GM_info.script.name,
+    description: GM_info.script.description,
+  }
+script.appendChild(
+  document.createTextNode('(' + wrapper + ')(' + JSON.stringify(info) + ');')
+)
+;(document.body || document.head || document.documentElement).appendChild(
+  script
+)
