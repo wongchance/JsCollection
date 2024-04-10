@@ -6,8 +6,8 @@
 // @description    Calculate how to link the portals to create the largest tidy set of nested fields. Enable from the layer chooser.
 // @id             fly-links
 // @namespace      https://github.com/IITC-CE/ingress-intel-total-conversion
-// @updateURL      https://github.com/wongchance/iitcJs/raw/master/fly-links.user.js
-// @downloadURL    https://github.com/wongchance/iitcJs/raw/master/fly-links.user.js
+// @updateURL      https://github.com/wongchance/jsCollection/raw/master/fly-links.user.js
+// @downloadURL    https://github.com/wongchance/jsCollection/raw/master/fly-links.user.js
 // @match          https://intel.ingress.com/*
 // @match          https://intel-x.ingress.com/*
 // @icon           https://iitc.app/extras/plugin-icons/fly-links.png
